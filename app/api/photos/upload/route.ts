@@ -1,4 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0;
 import { prisma } from '@/lib/prisma';
 import { getImageMetadata } from '@/lib/imageProcessor';
 import path from 'path';

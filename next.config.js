@@ -16,6 +16,8 @@ const nextConfig = {
     // Chỉ warning về lỗi eslint trong khi build, không fail build
     ignoreDuringBuilds: true,
   },
+  output: 'standalone',
+  staticPageGenerationTimeout: 1000,
 };
 
 module.exports = nextConfig;

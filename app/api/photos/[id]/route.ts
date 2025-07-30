@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 // import { prisma } from '@/lib/prisma' // Đã import ở trên
 import fs from 'fs' // Sử dụng 'fs' cho các hàm đồng bộ
 import { prisma } from '@/lib/prisma'
