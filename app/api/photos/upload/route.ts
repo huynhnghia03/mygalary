@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0;
@@ -10,15 +10,26 @@ import path from 'path';
 import { writeFile, mkdir } from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+    return new Response(null, {
+        status: 200,
+        headers: corsHeaders,
+    });
+}
+
 // Helper function để tạo response với CORS headers
 const createJsonResponse = (data: any, status: number = 200) => {
     return new Response(JSON.stringify(data), {
         status,
         headers: {
+            ...corsHeaders,
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         },
     });
 };
@@ -26,10 +37,6 @@ const createJsonResponse = (data: any, status: number = 200) => {
 export async function POST(req: NextRequest) {
     try {
         console.log('Starting file upload process...');
-        
-        if (req.method !== 'POST') {
-            return createJsonResponse({ error: 'Method not allowed' }, 405);
-        }
 
         const formData = await req.formData();
         const files = formData.getAll('photos') as File[];

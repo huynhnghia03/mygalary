@@ -6,10 +6,10 @@ async function main() {
     console.log('Running prisma generate...');
     execSync('npx prisma generate', { stdio: 'inherit' });
 
-    // Chỉ chạy migration trong môi trường production
-    if (process.env.NODE_ENV === 'production') {
-      console.log('Running database migrations...');
-      execSync('npx prisma db push --accept-data-loss', { stdio: 'inherit' });
+    // Trong development, luôn chạy db push để cập nhật schema
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Running development database setup...');
+      execSync('npx prisma db push', { stdio: 'inherit' });
     }
   } catch (error) {
     console.error('Error during postinstall:', error);

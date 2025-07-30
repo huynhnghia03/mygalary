@@ -2,18 +2,33 @@ import { PrismaClient } from '@prisma/client'
 
 const prismaClientSingleton = () => {
   return new PrismaClient({
-    log: ['query', 'error', 'warn']
+    log: ['error', 'warn'],
+    errorFormat: 'pretty',
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL
+      }
+    }
   })
 }
 
-type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClientSingleton | undefined
+declare global {
+  var prisma: undefined | ReturnType<typeof prismaClientSingleton>
 }
 
-export const prisma = globalForPrisma.prisma ?? prismaClientSingleton()
+const prisma = globalThis.prisma ?? prismaClientSingleton()
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma
+  globalThis.prisma = prisma
 }
+
+// Kiểm tra kết nối
+prisma.$connect()
+  .then(() => {
+    console.log('Successfully connected to database')
+  })
+  .catch((e:any) => {
+    console.error('Error connecting to database:', e)
+  })
+
+export { prisma }
