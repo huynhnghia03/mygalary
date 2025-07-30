@@ -1,5 +1,3 @@
-// Re-export prisma client from our singleton configuration
-export { prisma } from './prisma-client';
 import { PrismaClient } from '@prisma/client'
 
 const prismaClientSingleton = () => {
@@ -14,17 +12,14 @@ const prismaClientSingleton = () => {
   })
 }
 
-declare global {
-  var prisma: undefined | ReturnType<typeof prismaClientSingleton>
+type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClientSingleton | undefined
 }
 
-const prisma = globalThis.prisma ?? prismaClientSingleton()
+export const prisma = globalForPrisma.prisma ?? prismaClientSingleton()
 
 if (process.env.NODE_ENV !== "production") {
-  globalThis.prisma = prisma
-}
-
-export { prisma }
-if (process.env.NODE_ENV !== 'production') {
-  global.prisma = prisma
+  globalForPrisma.prisma = prisma
 }
