@@ -1,25 +1,26 @@
-import { NextRequest } from 'next/server'
+import { NextRequest } from 'next/server';
 
-export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
-export const maxDuration = 300; // Tăng timeout lên 5 phút
+export const maxDuration = 300;
 
 import { prisma } from '@/lib/prisma';
 import { getImageMetadata } from '@/lib/imageProcessor';
 import path from 'path';
-import { writeFile, mkdir } from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Content-Length',
 };
 
 export async function OPTIONS() {
     return new Response(null, {
         status: 200,
-        headers: corsHeaders,
+        headers: corsHeaders
     });
 }
 
@@ -35,6 +36,11 @@ const createJsonResponse = (data: any, status: number = 200) => {
 };
 
 export async function POST(req: NextRequest) {
+    // Kiểm tra method
+    if (req.method !== 'POST') {
+        return createJsonResponse({ error: 'Method not allowed' }, 405);
+    }
+
     try {
         console.log('Starting file upload process...');
 
@@ -48,16 +54,6 @@ export async function POST(req: NextRequest) {
         console.log(`Processing ${files.length} files...`);
 
         const savedPhotos = [];
-        const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-        
-        // Đảm bảo thư mục uploads tồn tại
-        try {
-            await mkdir(uploadsDir, { recursive: true });
-            console.log('Upload directory created/verified successfully');
-        } catch (error) {
-            console.error('Error creating upload directory:', error);
-            return createJsonResponse({ error: 'Không thể tạo thư mục upload' }, 500);
-        }
 
         for (const file of files) {
             // Bỏ qua nếu không phải file ảnh
@@ -69,28 +65,28 @@ export async function POST(req: NextRequest) {
             try {
                 console.log(`Processing file: ${file.name}`);
                 
-                // Chuyển file thành ArrayBuffer
-                const bytes = await file.arrayBuffer();
-                console.log('File converted to ArrayBuffer');
+                // Chuyển file thành Buffer
+                const buffer = Buffer.from(await file.arrayBuffer());
+                console.log('File converted to Buffer');
                 
                 // Tạo tên file duy nhất
                 const uniqueFilename = `${uuidv4()}${path.extname(file.name)}`;
-                const filePath = path.join(uploadsDir, uniqueFilename);
                 console.log(`File will be saved as: ${uniqueFilename}`);
 
-                // Ghi file vào ổ đĩa
+                // Upload file lên Cloudinary
+                let fileUrl;
                 try {
-                    await writeFile(filePath, new Uint8Array(bytes));
-                    console.log('File written to disk successfully');
-                } catch (writeError) {
-                    console.error('Error writing file:', writeError);
+                    fileUrl = await uploadToCloudinary(buffer, uniqueFilename, file.type);
+                    console.log('File uploaded to Cloudinary successfully:', fileUrl);
+                } catch (uploadError) {
+                    console.error('Error uploading to Cloudinary:', uploadError);
                     continue;
                 }
 
-                // Lấy thông tin metadata từ file đã lưu
+                // Lấy thông tin metadata từ buffer
                 let metadata;
                 try {
-                    metadata = await getImageMetadata(filePath);
+                    metadata = await getImageMetadata(buffer);
                     console.log('Image metadata retrieved:', metadata);
                 } catch (metadataError) {
                     console.error('Error getting metadata:', metadataError);
@@ -105,7 +101,7 @@ export async function POST(req: NextRequest) {
                             size: file.size,
                             width: metadata.width,
                             height: metadata.height,
-                            url: `/uploads/${uniqueFilename}`,
+                            url: fileUrl,
                         },
                     });
                     console.log('Database record created:', photo);

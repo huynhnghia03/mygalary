@@ -1,8 +1,8 @@
 import sharp from 'sharp'
 
-export async function getImageMetadata(filePath: string) {
+export async function getImageMetadata(input: Buffer | string) {
   try {
-    const metadata = await sharp(filePath).metadata()
+    const metadata = await sharp(input).metadata()
     return {
       width: metadata.width || 0,
       height: metadata.height || 0,
