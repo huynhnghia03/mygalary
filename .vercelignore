@@ -1,0 +1,10 @@
+.next
+node_modules
+.env
+.env.*
+npm-debug.log
+.DS_Store
+.idea/
+.vscode/
+*.log
+public/uploads/
