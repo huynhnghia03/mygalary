@@ -10,19 +10,32 @@ import path from 'path';
 import { writeFile, mkdir } from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 
+// Helper function để tạo response với CORS headers
+const createJsonResponse = (data: any, status: number = 200) => {
+    return new Response(JSON.stringify(data), {
+        status,
+        headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+    });
+};
+
 export async function POST(req: NextRequest) {
     try {
         console.log('Starting file upload process...');
         
         if (req.method !== 'POST') {
-            return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+            return createJsonResponse({ error: 'Method not allowed' }, 405);
         }
 
         const formData = await req.formData();
         const files = formData.getAll('photos') as File[];
 
         if (files.length === 0) {
-            return NextResponse.json({ error: 'Không có file nào được upload' }, { status: 400 });
+            return createJsonResponse({ error: 'Không có file nào được upload' }, 400);
         }
 
         console.log(`Processing ${files.length} files...`);
@@ -36,7 +49,7 @@ export async function POST(req: NextRequest) {
             console.log('Upload directory created/verified successfully');
         } catch (error) {
             console.error('Error creating upload directory:', error);
-            return NextResponse.json({ error: 'Không thể tạo thư mục upload' }, { status: 500 });
+            return createJsonResponse({ error: 'Không thể tạo thư mục upload' }, 500);
         }
 
         for (const file of files) {
@@ -101,29 +114,13 @@ export async function POST(req: NextRequest) {
         }
         
         if (savedPhotos.length === 0) {
-            return new NextResponse(
-                JSON.stringify({ error: 'Không có file ảnh hợp lệ nào được upload' }), 
-                { 
-                    status: 400,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                }
-            );
+            return createJsonResponse({ error: 'Không có file ảnh hợp lệ nào được upload' }, 400);
         }
 
-        return new NextResponse(
-            JSON.stringify({
-                message: 'Upload thành công!',
-                photos: savedPhotos,
-            }), 
-            { 
-                status: 200,
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            }
-        );
+        return createJsonResponse({
+            message: 'Upload thành công!',
+            photos: savedPhotos
+        });
 
     } catch (error: any) {
         console.error('Upload error:', error);
@@ -134,14 +131,6 @@ export async function POST(req: NextRequest) {
         if (error.code) {
             errorMessage += ` (Code: ${error.code})`;
         }
-        return new NextResponse(
-            JSON.stringify({ error: errorMessage }), 
-            { 
-                status: 500,
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            }
-        );
+        return createJsonResponse({ error: errorMessage }, 500);
     }
 }
