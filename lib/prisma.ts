@@ -2,13 +2,7 @@ import { PrismaClient } from '@prisma/client'
 
 const prismaClientSingleton = () => {
   return new PrismaClient({
-    datasources: {
-      db: {
-        url: process.env.NODE_ENV === "production"
-          ? process.env.POSTGRES_PRISMA_URL
-          : process.env.POSTGRES_URL
-      },
-    },
+    log: ['query', 'error', 'warn']
   })
 }
 
