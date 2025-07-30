@@ -16,10 +16,8 @@ const nextConfig = {
     ignoreDuringBuilds: true
   },
   experimental: {
-    serverActions: {
-      allowedOrigins: ['localhost:3000', '*.vercel.app'],
-    },
-  },
+    serverActions: true
+  }
 }
 
 module.exports = nextConfig;

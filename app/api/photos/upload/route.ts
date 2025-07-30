@@ -5,11 +5,15 @@ export const revalidate = 0;
 import { prisma } from '@/lib/prisma';
 import { getImageMetadata } from '@/lib/imageProcessor';
 import path from 'path';
-import fs from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(req: NextRequest) {
     try {
+        if (req.method !== 'POST') {
+            return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+        }
+
         const formData = await req.formData();
         const files = formData.getAll('photos') as File[];
 
@@ -21,7 +25,7 @@ export async function POST(req: NextRequest) {
         const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
         
         // Đảm bảo thư mục uploads tồn tại
-        await fs.mkdir(uploadsDir, { recursive: true });
+        await mkdir(uploadsDir, { recursive: true });
 
         for (const file of files) {
             // Bỏ qua nếu không phải file ảnh
@@ -30,15 +34,15 @@ export async function POST(req: NextRequest) {
                 continue;
             }
 
-            // Chuyển file thành buffer
-            const buffer = Buffer.from(await file.arrayBuffer());
+            // Chuyển file thành ArrayBuffer
+            const bytes = await file.arrayBuffer();
             
             // Tạo tên file duy nhất
             const uniqueFilename = `${uuidv4()}${path.extname(file.name)}`;
             const filePath = path.join(uploadsDir, uniqueFilename);
 
             // Ghi file vào ổ đĩa
-            await fs.writeFile(filePath, buffer);
+            await writeFile(filePath, new Uint8Array(bytes));
 
             // Lấy thông tin metadata từ file đã lưu
             const { width, height } = await getImageMetadata(filePath);
