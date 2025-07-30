@@ -7,8 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // Vercel PostgreSQL production URL
-  directUrl = env("POSTGRES_URL_NON_POOLING") // Vercel PostgreSQL direct URL for migrations
+  url = env("POSTGRES_PRISMA_URL") // Vercel PostgreSQL URL
 }
 
 model Photo {
