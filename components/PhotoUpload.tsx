@@ -24,6 +24,9 @@ export default function PhotoUpload({ onUploadComplete, uploading, setUploading 
       
       const response = await fetch('/api/photos/upload', {
         method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+        },
         body: formData,
       })
 
