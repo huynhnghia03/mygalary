@@ -1,9 +1,12 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 export const maxDuration = 300;
+
+// Định nghĩa các methods được phép
+export const allowedMethods = ['POST', 'OPTIONS'];
 
 import { prisma } from '@/lib/prisma';
 import { getImageMetadata } from '@/lib/imageProcessor';
@@ -13,39 +16,34 @@ import { uploadToCloudinary } from '@/lib/cloudinary';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
     'Access-Control-Allow-Credentials': 'true',
 };
 
-export async function OPTIONS() {
-    return new Response(null, {
-        status: 200,
-        headers: corsHeaders
-    });
-}
-
 // Helper function để tạo response với CORS headers
 const createJsonResponse = (data: any, status: number = 200) => {
-    return new Response(JSON.stringify(data), {
+    return NextResponse.json(data, {
         status,
-        headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json',
-        },
+        headers: corsHeaders,
+    });
+};
+
+// Handler cho OPTIONS request
+export async function OPTIONS() {
+    return NextResponse.json({}, { 
+        status: 200,
+        headers: corsHeaders
     });
 };
 
 export async function POST(req: NextRequest) {
-    if (req.method === 'OPTIONS') {
-        return new Response(null, {
-            status: 200,
-            headers: corsHeaders
-        });
-    }
-    
-    if (req.method !== 'POST') {
-        return createJsonResponse({ error: 'Method not allowed' }, 405);
+    // Kiểm tra method
+    if (!allowedMethods.includes(req.method)) {
+        return createJsonResponse(
+            { error: `Method ${req.method} Not Allowed` },
+            405
+        );
     }
 
     try {
