@@ -14,7 +14,8 @@ import { uploadToCloudinary } from '@/lib/cloudinary';
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Content-Length',
+    'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
+    'Access-Control-Allow-Credentials': 'true',
 };
 
 export async function OPTIONS() {
@@ -36,7 +37,13 @@ const createJsonResponse = (data: any, status: number = 200) => {
 };
 
 export async function POST(req: NextRequest) {
-    // Kiểm tra method
+    if (req.method === 'OPTIONS') {
+        return new Response(null, {
+            status: 200,
+            headers: corsHeaders
+        });
+    }
+    
     if (req.method !== 'POST') {
         return createJsonResponse({ error: 'Method not allowed' }, 405);
     }
