@@ -22,12 +22,12 @@ export async function DELETE(req: NextRequest, { params }: RouteContext) {
             return NextResponse.json({ error: 'Không tìm thấy ảnh' }, { status: 404 })
         }
 
-        // Xóa file vật lý bằng đường dẫn tuyệt đối đã lưu trong DB
-        // Sử dụng fs đồng bộ để đơn giản hóa
-        if (fs.existsSync(photo.path)) {
-            fs.unlinkSync(photo.path)
+        // Xóa file vật lý từ thư mục uploads
+        const filePath = process.cwd() + '/public' + photo.url;
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath)
         } else {
-            console.warn(`File not found for deletion, but proceeding to delete DB record: ${photo.path}`);
+            console.warn(`File not found for deletion, but proceeding to delete DB record: ${filePath}`);
         }
 
         // Xóa record trong database
